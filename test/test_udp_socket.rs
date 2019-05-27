@@ -1,4 +1,5 @@
-use mio::{Events, Poll, PollOpt, Ready, Token};
+use crate::localhost;
+use bytes::{Buf, MutBuf, RingBuf, SliceBuf};
 use mio::net::UdpSocket;
 use bytes::{Buf, RingBuf, SliceBuf, MutBuf};
 use std::io::ErrorKind;
@@ -176,6 +177,8 @@ pub fn test_udp_socket_discard() {
 #[cfg(all(unix, not(target_os = "fuchsia")))]
 #[test]
 pub fn test_udp_socket_send_recv_bufs() {
+    use iovec::IoVec;
+
     let (tx, rx) = connected_sockets();
 
     let poll = Poll::new().unwrap();

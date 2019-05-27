@@ -6,17 +6,20 @@ use std::os::windows::prelude::*;
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
 use std::time::Duration;
-
-use lazycell::AtomicLazyCell;
-
-use winapi::*;
-use miow;
-use miow::iocp::{CompletionPort, CompletionStatus};
-
-use event_imp::{Event, Evented, Ready};
-use poll::{self, Poll};
+use winapi::shared::winerror::WAIT_TIMEOUT;
+use winapi::um::minwinbase::OVERLAPPED;
+use winapi::um::minwinbase::OVERLAPPED_ENTRY;
+use miow::iocp::CompletionPort;
 use sys::windows::buffer_pool::BufferPool;
-use {Token, PollOpt};
+use Token;
+use lazycell::AtomicLazyCell;
+use Poll;
+use poll;
+use Ready;
+use PollOpt;
+use miow::iocp::CompletionStatus;
+use Event;
+use event_imp::Evented;
 
 /// Each Selector has a globally unique(ish) ID associated with it. This ID
 /// gets tracked by `TcpStream`, `TcpListener`, etc... when they are first

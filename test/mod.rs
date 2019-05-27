@@ -1,9 +1,5 @@
 #![allow(deprecated)]
 
-extern crate mio;
-extern crate bytes;
-extern crate net2;
-
 #[macro_use]
 extern crate log;
 extern crate env_logger;

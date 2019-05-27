@@ -5,18 +5,25 @@ use std::net::{self, SocketAddr, Shutdown};
 use std::os::windows::prelude::*;
 use std::sync::{Mutex, MutexGuard};
 use std::time::Duration;
-
-use miow::iocp::CompletionStatus;
-use miow::net::*;
-use net2::{TcpBuilder, TcpStreamExt as Net2TcpExt};
-use winapi::*;
-use iovec::IoVec;
-
-use {poll, Ready, Poll, PollOpt, Token};
-use event::Evented;
+use winapi::um::minwinbase::OVERLAPPED_ENTRY;
+use winapi::um::winnt::HANDLE;
+use poll;
 use sys::windows::from_raw_arc::FromRawArc;
-use sys::windows::selector::{Overlapped, ReadyBinding};
+use sys::windows::selector::Overlapped;
+use sys::windows::selector::ReadyBinding;
+use miow::net::AcceptAddrsBuf;
+use Ready;
+use IoVec;
 use sys::windows::Family;
+use miow::iocp::CompletionStatus;
+use Evented;
+use Poll;
+use Token;
+use PollOpt;
+use net2::TcpBuilder;
+use net2::TcpStreamExt;
+use miow::net::TcpStreamExt as OtherTcpStreamExt;
+use miow::net::TcpListenerExt;
 
 pub struct TcpStream {
     /// Separately stored implementation to ensure that the `Drop`
@@ -746,8 +753,13 @@ impl ListenerImp {
             Family::V6 => TcpBuilder::new_v6(),
         }.and_then(|builder| unsafe {
             trace!("scheduling an accept");
-            self.inner.socket.accept_overlapped(&builder, &mut me.accept_buf,
-                                                self.inner.accept.as_mut_ptr())
+            let socket = builder.to_tcp_stream()?;
+            let ready = self.inner.socket.accept_overlapped(
+                &socket,
+                &mut me.accept_buf,
+                self.inner.accept.as_mut_ptr(),
+            )?;
+            Ok((socket, ready))
         });
         match res {
             Ok((socket, _)) => {

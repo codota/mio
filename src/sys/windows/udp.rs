@@ -9,18 +9,21 @@ use std::io;
 use std::mem;
 use std::net::{self, Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::sync::{Mutex, MutexGuard};
-
-#[allow(unused_imports)]
-use net2::{UdpBuilder, UdpSocketExt};
-use winapi::*;
-use miow::iocp::CompletionStatus;
-use miow::net::SocketAddrBuf;
-use miow::net::UdpSocketExt as MiowUdpSocketExt;
-
-use {poll, Ready, Poll, PollOpt, Token};
-use event::Evented;
+use winapi::um::minwinbase::OVERLAPPED_ENTRY;
+use winapi::um::winsock2::WSAEMSGSIZE;
+use poll;
 use sys::windows::from_raw_arc::FromRawArc;
-use sys::windows::selector::{Overlapped, ReadyBinding};
+use crate::sys::windows::selector::Overlapped;
+use sys::windows::selector::ReadyBinding;
+use miow::net::SocketAddrBuf;
+use Ready;
+use Poll;
+use Token;
+use PollOpt;
+use Evented;
+use miow::iocp::CompletionStatus;
+use net2::UdpSocketExt;
+use miow::net::UdpSocketExt as OtherUdpSocketExt;
 
 pub struct UdpSocket {
     imp: Imp,
